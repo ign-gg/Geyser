@@ -29,14 +29,14 @@ import com.github.steveice10.mc.protocol.data.game.recipe.Ingredient;
 import com.github.steveice10.mc.protocol.data.game.recipe.Recipe;
 import com.github.steveice10.mc.protocol.data.game.recipe.data.ShapedRecipeData;
 import com.github.steveice10.mc.protocol.data.game.recipe.data.ShapelessRecipeData;
+import com.github.steveice10.mc.protocol.data.game.recipe.data.StoneCuttingRecipeData;
 import com.github.steveice10.mc.protocol.packet.ingame.server.ServerDeclareRecipesPacket;
 import com.nukkitx.nbt.tag.CompoundTag;
 import com.nukkitx.protocol.bedrock.data.CraftingData;
 import com.nukkitx.protocol.bedrock.data.ItemData;
 import com.nukkitx.protocol.bedrock.data.PotionMixData;
 import com.nukkitx.protocol.bedrock.packet.CraftingDataPacket;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import org.geysermc.connector.network.session.GeyserSession;
@@ -55,6 +55,8 @@ public class JavaDeclareRecipesTranslator extends PacketTranslator<ServerDeclare
             Arrays.stream(new int[]{372, 331, 348, 376, 289, 437, 353, 414, 382, 375, 462, 378, 396, 377, 370, 469, 470})
             .mapToObj(ingredient -> new PotionMixData(0, ingredient, 0))
             .collect(Collectors.toList());
+
+    public static Int2ObjectMap<ArrayList<ItemData>> STONECUTTER_RECIPES = new Int2ObjectOpenHashMap<>();
 
     @Override
     public void translate(ServerDeclareRecipesPacket packet, GeyserSession session) {
@@ -87,6 +89,25 @@ public class JavaDeclareRecipesTranslator extends PacketTranslator<ServerDeclare
                     }
                     break;
                 }
+                case STONECUTTING:
+                    StoneCuttingRecipeData stoneCuttingRecipeData = (StoneCuttingRecipeData) recipe.getData();
+                    System.out.println(stoneCuttingRecipeData.getIngredient());
+                    ItemData output = Translators.getItemTranslator().translateToBedrock(stoneCuttingRecipeData.getResult());
+                    output = ItemData.of(output.getId(), output.getDamage(), output.getCount()); //strip NBT
+                    ItemData[][] inputCombinations = combinations(new Ingredient[] {stoneCuttingRecipeData.getIngredient()});
+                    int count = 0;
+                    for (ItemData[] inputs : inputCombinations) {
+                        UUID uuid = UUID.randomUUID();
+                        craftingDataPacket.getCraftingData().add(CraftingData.fromShapeless(uuid.toString(),
+                                inputs, new ItemData[]{output}, uuid, "stonecutter", 0));
+                        if (STONECUTTER_RECIPES.get(inputs[0].getId()) == null) {
+                            STONECUTTER_RECIPES.put(inputs[0].getId(), new ArrayList<>());
+                            System.out.println("Input length: " + inputs.length);
+                        }
+                        STONECUTTER_RECIPES.get(inputs[0].getId()).add(output);
+                        count++;
+                    }
+                    break;
             }
         }
         craftingDataPacket.getPotionMixData().addAll(POTION_MIXES);
