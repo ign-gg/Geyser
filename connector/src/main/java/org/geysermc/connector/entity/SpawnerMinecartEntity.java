@@ -23,21 +23,22 @@
  * @link https://github.com/GeyserMC/Geyser
  */
 
-package org.geysermc.connector.entity.living.merchant;
+package org.geysermc.connector.entity;
 
 import com.nukkitx.math.vector.Vector3f;
-import org.geysermc.connector.entity.living.AgeableEntity;
+import com.nukkitx.protocol.bedrock.data.EntityData;
 import org.geysermc.connector.entity.type.EntityType;
-import org.geysermc.connector.network.session.GeyserSession;
+import org.geysermc.connector.network.translators.world.block.BlockTranslator;
 
-public class AbstractMerchantEntity extends AgeableEntity {
+public class SpawnerMinecartEntity extends DefaultBlockMinecartEntity {
 
-    public AbstractMerchantEntity(long entityId, long geyserId, EntityType entityType, Vector3f position, Vector3f motion, Vector3f rotation) {
+    public SpawnerMinecartEntity(long entityId, long geyserId, EntityType entityType, Vector3f position, Vector3f motion, Vector3f rotation) {
         super(entityId, geyserId, entityType, position, motion, rotation);
     }
 
     @Override
-    public void teleport(GeyserSession session, Vector3f position, float yaw, float pitch, boolean isOnGround) {
-        super.teleport(session, position, yaw - 180, pitch, isOnGround);
+    public void updateDefaultBlockMetadata() {
+        metadata.put(EntityData.DISPLAY_ITEM, BlockTranslator.getBedrockBlockId(BlockTranslator.JAVA_RUNTIME_SPAWNER_ID));
+        metadata.put(EntityData.DISPLAY_OFFSET, 6);
     }
 }
