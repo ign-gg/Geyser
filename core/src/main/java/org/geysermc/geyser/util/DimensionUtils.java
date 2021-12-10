@@ -58,8 +58,6 @@ public class DimensionUtils {
 
     public static void switchDimension(GeyserSession session, String javaDimension) {
         int bedrockDimension = javaToBedrock(javaDimension);
-        int previousDimension = javaToBedrock(session.getDimension());
-
         Entity player = session.getPlayerEntity();
 
         session.getChunkCache().clear();
@@ -104,17 +102,6 @@ public class DimensionUtils {
         // TODO - fix this hack of a fix by sending the final dimension switching logic after sections have been sent.
         // The client wants sections sent to it before it can successfully respawn.
         ChunkUtils.sendEmptyChunks(session, player.getPosition().toInt(), 3, true);
-
-        // If the bedrock nether height workaround is enabled, meaning the client is told it's in the end dimension,
-        // we check if the player is entering the nether and apply the nether fog to fake the fact that the client
-        // thinks they are in the end dimension.
-        if (BEDROCK_NETHER_ID == 2) {
-            if (bedrockDimension == BEDROCK_NETHER_ID) {
-                session.sendFog("minecraft:fog_hell");
-            } else if (previousDimension == BEDROCK_NETHER_ID) {
-                session.removeFog("minecraft:fog_hell");
-            }
-        }
     }
 
     /**
@@ -175,9 +162,5 @@ public class DimensionUtils {
             return javaToBedrock(newDimension) == 2 ? OVERWORLD : NETHER;
         }
         return currentDimension.equals(OVERWORLD) ? NETHER : OVERWORLD;
-    }
-
-    public static boolean isCustomBedrockNetherId() {
-        return BEDROCK_NETHER_ID == 2;
     }
 }
